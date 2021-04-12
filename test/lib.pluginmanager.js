@@ -33,11 +33,12 @@ it('should inherit from event emitter', function (done) {
   pm.on('foo', done);
   pm.emit('foo');
 });
-it('should detect when a new plugin needs to be installed', async function (done) {
-  await addPlugin();
-  pm.isUpgradeRequired(function (required) {
-    required.should.be.true;
-    done();
+it('should detect when a new plugin needs to be installed', function (done) {
+  addPlugin().then(() => {
+    pm.isUpgradeRequired(function (required) {
+      required.should.be.true;
+      done();
+    });
   });
 });
 it('should verify if a plugin is of a particular type and validate it', async function () {
@@ -49,16 +50,17 @@ it('should verify if a plugin is of a particular type and validate it', async fu
     pluginTypes.should.containEql(pluginInfo.type);
   });
 });
-it('should be able to install new plugins', async function (done) {
-  await addPlugin();
-  pm.getPlugin(testData.type, testData.name, function (error, pluginInfo) {
-    should.not.exist(error);
-    pm.installPlugin(pluginInfo, function (error) {
-      should.not.exist(error); // confirm that the plugin was installed
-
-      pm.isInstalled(pluginInfo, function (installed) {
-        installed.should.equal(true, 'Failed to verify that plugin was installed!');
-        done();
+it('should be able to install new plugins', function (done) {
+  addPlugin().then(() => {
+    pm.getPlugin(testData.type, testData.name, function (error, pluginInfo) {
+      should.not.exist(error);
+      pm.installPlugin(pluginInfo, function (error) {
+        should.not.exist(error); // confirm that the plugin was installed
+  
+        pm.isInstalled(pluginInfo, function (installed) {
+          installed.should.equal(true, 'Failed to verify that plugin was installed!');
+          done();
+        });
       });
     });
   });
@@ -88,26 +90,28 @@ it('should detect when an installed plugin has been removed from disk', function
     });
   });
 });
-it('should be able to uninstall plugins', async function (done) {
+it('should be able to uninstall plugins', function (done) {
   // first, make sure it's installed
-  await addPlugin();
-  pm.getPlugin(testData.type, testData.name, function (error, pluginInfo) {
-    should.not.exist(error);
-    pm.uninstallPlugin(pluginInfo, function (error) {
-      if (error) {
-        done(error);
-      } else {
-        // confirm that the plugin was uninstalled
-        pm.isInstalled(pluginInfo, function (installed) {
-          if (installed) {
-            done(new Error('Failed to verify that plugin was uninstalled!'));
-          } else {
-            done();
-          }
-        });
-      }
+  addPlugin().then(() => {
+    pm.getPlugin(testData.type, testData.name, function (error, pluginInfo) {
+      should.not.exist(error);
+      pm.uninstallPlugin(pluginInfo, function (error) {
+        if (error) {
+          done(error);
+        } else {
+          // confirm that the plugin was uninstalled
+          pm.isInstalled(pluginInfo, function (installed) {
+            if (installed) {
+              done(new Error('Failed to verify that plugin was uninstalled!'));
+            } else {
+              done();
+            }
+          });
+        }
+      });
     });
   });
+  
 });
 
 async function addPlugin() {
